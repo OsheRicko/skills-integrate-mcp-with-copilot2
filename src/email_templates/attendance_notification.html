@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📊 Attendance Notification</h2>
+
+<p>Hi {{ recipient_name or "Parent/Guardian" }},</p>
+
+<p>This is to notify you about {{ student_name }}'s attendance for <strong>{{ activity_name }}</strong>.</p>
+
+<div class="info-box">
+    <h3>Attendance Details</h3>
+    <p><strong>Student:</strong> {{ student_name }}</p>
+    <p><strong>Activity:</strong> {{ activity_name }}</p>
+    <p><strong>Date:</strong> {{ date }}</p>
+    <p><strong>Status:</strong> {{ attendance_status }}</p>
+</div>
+
+{% if note %}
+<p><strong>Note:</strong> {{ note }}</p>
+{% endif %}
+
+<p>If you have any questions, please contact the activity coordinator.</p>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}

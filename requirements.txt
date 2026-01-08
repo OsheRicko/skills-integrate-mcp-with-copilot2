@@ -1,2 +1,8 @@
 fastapi
 uvicorn
+fastapi-mail
+jinja2
+celery
+redis
+python-dotenv
+aiosmtplib

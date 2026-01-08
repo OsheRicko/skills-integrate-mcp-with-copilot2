@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>⏰ Reminder: Upcoming Activity</h2>
+
+<p>Hi {{ student_name or "Student" }},</p>
+
+<p>This is a friendly reminder that you have <strong>{{ activity_name }}</strong> coming up soon!</p>
+
+<div class="info-box">
+    <h3>Activity Details</h3>
+    <p><strong>Activity:</strong> {{ activity_name }}</p>
+    <p><strong>When:</strong> {{ next_session }}</p>
+    <p><strong>Schedule:</strong> {{ schedule }}</p>
+</div>
+
+<p>Don't forget to bring any necessary materials and arrive on time.</p>
+
+<p>Looking forward to seeing you there!</p>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}
