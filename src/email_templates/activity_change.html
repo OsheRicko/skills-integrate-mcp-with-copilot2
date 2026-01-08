@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>⚠️ Activity Update</h2>
+
+<p>Hi {{ student_name or "Student" }},</p>
+
+<p>There has been an important update to <strong>{{ activity_name }}</strong>, which you are registered for.</p>
+
+<div class="info-box">
+    <h3>What Changed?</h3>
+    <p>{{ change_description }}</p>
+</div>
+
+{% if new_schedule %}
+<div class="info-box">
+    <h3>New Schedule</h3>
+    <p>{{ new_schedule }}</p>
+</div>
+{% endif %}
+
+<p>Please take note of this change and adjust your schedule accordingly.</p>
+
+<p>If you have any questions or concerns, please contact us.</p>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}

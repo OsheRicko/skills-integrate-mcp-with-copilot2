@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>❌ Unregistration Confirmed</h2>
+
+<p>Hi {{ student_name or "Student" }},</p>
+
+<p>This is to confirm that you have been successfully unregistered from <strong>{{ activity_name }}</strong>.</p>
+
+<div class="info-box">
+    <h3>Activity Details</h3>
+    <p><strong>Activity:</strong> {{ activity_name }}</p>
+    <p><strong>Schedule:</strong> {{ schedule }}</p>
+</div>
+
+<p>We're sorry to see you go! You're always welcome to register again if you change your mind.</p>
+
+<p>If this was done in error, please contact us immediately or re-register through the school portal.</p>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📢 New Activity Available!</h2>
+
+<p>Hi {{ student_name or "Student" }},</p>
+
+<p>Exciting news! A new activity is now available for registration: <strong>{{ activity_name }}</strong></p>
+
+<div class="info-box">
+    <h3>Activity Details</h3>
+    <p><strong>Activity:</strong> {{ activity_name }}</p>
+    <p><strong>Schedule:</strong> {{ schedule }}</p>
+    <p><strong>Description:</strong> {{ description }}</p>
+    <p><strong>Max Participants:</strong> {{ max_participants }}</p>
+</div>
+
+<p>Don't miss out! Register now through the school portal.</p>
+
+<a href="{{ portal_url }}" class="button">Register Now</a>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}

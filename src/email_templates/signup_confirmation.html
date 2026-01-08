@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>✅ Registration Confirmed!</h2>
+
+<p>Hi {{ student_name or "Student" }},</p>
+
+<p>Great news! You have successfully registered for <strong>{{ activity_name }}</strong>.</p>
+
+<div class="info-box">
+    <h3>Activity Details</h3>
+    <p><strong>Activity:</strong> {{ activity_name }}</p>
+    <p><strong>Schedule:</strong> {{ schedule }}</p>
+    <p><strong>Description:</strong> {{ description }}</p>
+</div>
+
+<p>We're excited to have you join us! Please make sure to attend the sessions as scheduled.</p>
+
+<p>If you need to unregister, you can do so through the school portal.</p>
+
+<p>See you there!</p>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📅 Your Weekly Activity Digest</h2>
+
+<p>Hi {{ student_name or "Student" }},</p>
+
+<p>Here's your weekly summary of upcoming activities for the week of {{ week_start }} to {{ week_end }}.</p>
+
+<h3>Your Registered Activities</h3>
+
+{% for activity in activities %}
+<div class="info-box">
+    <h3>{{ activity.name }}</h3>
+    <p><strong>Schedule:</strong> {{ activity.schedule }}</p>
+    <p><strong>Description:</strong> {{ activity.description }}</p>
+</div>
+{% endfor %}
+
+{% if activities|length == 0 %}
+<p>You're not currently registered for any activities. Check out what's available on the school portal!</p>
+{% endif %}
+
+<p>Have a great week!</p>
+
+<p>Best regards,<br>
+Mergington High School Activities Team</p>
+{% endblock %}

@@ -5,11 +5,27 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from typing import List, Optional
 import os
 from pathlib import Path
+
+# Import email-related modules
+from email_preferences import (
+    EmailPreferences,
+    get_user_preferences,
+    update_user_preferences,
+    get_all_preferences,
+    delete_user_preferences
+)
+from celery_tasks import (
+    send_signup_confirmation_task,
+    send_unregister_confirmation_task,
+    send_new_activity_announcement_task,
+    send_batch_emails_task
+)
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -89,7 +105,7 @@ def get_activities():
 
 
 @app.post("/activities/{activity_name}/signup")
-def signup_for_activity(activity_name: str, email: str):
+async def signup_for_activity(activity_name: str, email: str, background_tasks: BackgroundTasks):
     """Sign up a student for an activity"""
     # Validate activity exists
     if activity_name not in activities:
@@ -107,11 +123,21 @@ def signup_for_activity(activity_name: str, email: str):
 
     # Add student
     activity["participants"].append(email)
+    
+    # Send confirmation email asynchronously
+    background_tasks.add_task(
+        send_signup_confirmation_task.delay,
+        student_email=email,
+        activity_name=activity_name,
+        schedule=activity["schedule"],
+        description=activity["description"]
+    )
+    
     return {"message": f"Signed up {email} for {activity_name}"}
 
 
 @app.delete("/activities/{activity_name}/unregister")
-def unregister_from_activity(activity_name: str, email: str):
+async def unregister_from_activity(activity_name: str, email: str, background_tasks: BackgroundTasks):
     """Unregister a student from an activity"""
     # Validate activity exists
     if activity_name not in activities:
@@ -129,4 +155,150 @@ def unregister_from_activity(activity_name: str, email: str):
 
     # Remove student
     activity["participants"].remove(email)
+    
+    # Send confirmation email asynchronously
+    background_tasks.add_task(
+        send_unregister_confirmation_task.delay,
+        student_email=email,
+        activity_name=activity_name,
+        schedule=activity["schedule"]
+    )
+    
     return {"message": f"Unregistered {email} from {activity_name}"}
+
+
+# ============================================================================
+# EMAIL PREFERENCES ENDPOINTS
+# ============================================================================
+
+@app.get("/email-preferences/{email}")
+def get_email_preferences(email: str):
+    """Get email preferences for a user"""
+    preferences = get_user_preferences(email)
+    return preferences
+
+
+@app.put("/email-preferences/{email}")
+def set_email_preferences(email: str, preferences: EmailPreferences):
+    """Update email preferences for a user"""
+    if email != preferences.email:
+        raise HTTPException(
+            status_code=400,
+            detail="Email in path must match email in preferences"
+        )
+    updated_prefs = update_user_preferences(email, preferences)
+    return {"message": "Preferences updated successfully", "preferences": updated_prefs}
+
+
+@app.delete("/email-preferences/{email}")
+def remove_email_preferences(email: str):
+    """Delete email preferences for a user"""
+    if delete_user_preferences(email):
+        return {"message": "Preferences deleted successfully"}
+    raise HTTPException(status_code=404, detail="Preferences not found")
+
+
+@app.get("/email-preferences")
+def list_all_preferences():
+    """Get all user email preferences"""
+    return get_all_preferences()
+
+
+# ============================================================================
+# EMAIL ANNOUNCEMENT ENDPOINTS
+# ============================================================================
+
+@app.post("/announcements/new-activity/{activity_name}")
+async def announce_new_activity(
+    activity_name: str,
+    recipients: Optional[List[str]] = None,
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Send announcement email for a new activity.
+    If recipients not specified, sends to all users with preferences enabled.
+    """
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    activity = activities[activity_name]
+    
+    # If no recipients specified, get all users who want new activity emails
+    if not recipients:
+        all_prefs = get_all_preferences()
+        recipients = [
+            email for email, prefs in all_prefs.items()
+            if prefs.new_activities and prefs.enabled
+        ]
+    
+    if not recipients:
+        return {"message": "No recipients to send to"}
+    
+    # Send announcement emails asynchronously
+    background_tasks.add_task(
+        send_new_activity_announcement_task.delay,
+        recipients=recipients,
+        activity_name=activity_name,
+        schedule=activity["schedule"],
+        description=activity["description"],
+        max_participants=activity["max_participants"]
+    )
+    
+    return {
+        "message": f"Announcement emails queued for {len(recipients)} recipients",
+        "activity": activity_name,
+        "recipients_count": len(recipients)
+    }
+
+
+@app.post("/announcements/batch-email")
+async def send_batch_announcement(
+    recipients: List[str],
+    subject: str,
+    template_name: str,
+    context: dict,
+    background_tasks: BackgroundTasks
+):
+    """
+    Send batch announcement emails using a custom template.
+    
+    Args:
+        recipients: List of email addresses
+        subject: Email subject
+        template_name: Name of the email template (without .html)
+        context: Template context variables
+    """
+    if not recipients:
+        raise HTTPException(status_code=400, detail="No recipients specified")
+    
+    # Send batch emails asynchronously
+    background_tasks.add_task(
+        send_batch_emails_task.delay,
+        recipients=recipients,
+        subject=subject,
+        template_name=template_name,
+        context=context
+    )
+    
+    return {
+        "message": f"Batch emails queued for {len(recipients)} recipients",
+        "recipients_count": len(recipients)
+    }
+
+
+# ============================================================================
+# EMAIL STATUS ENDPOINT
+# ============================================================================
+
+@app.get("/email-service/status")
+def get_email_service_status():
+    """Check if email service is configured and enabled"""
+    from email_config import is_email_enabled
+    
+    enabled = is_email_enabled()
+    return {
+        "enabled": enabled,
+        "message": "Email service is configured" if enabled else "Email service is not configured. Set MAIL_USERNAME and MAIL_PASSWORD environment variables."
+    }
+
