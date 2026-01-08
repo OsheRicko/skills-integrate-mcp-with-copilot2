@@ -124,14 +124,18 @@ async def signup_for_activity(activity_name: str, email: str, background_tasks: 
     # Add student
     activity["participants"].append(email)
     
-    # Send confirmation email asynchronously
-    background_tasks.add_task(
-        send_signup_confirmation_task.delay,
-        student_email=email,
-        activity_name=activity_name,
-        schedule=activity["schedule"],
-        description=activity["description"]
-    )
+    # Send confirmation email asynchronously (gracefully handle failures)
+    try:
+        background_tasks.add_task(
+            send_signup_confirmation_task.delay,
+            student_email=email,
+            activity_name=activity_name,
+            schedule=activity["schedule"],
+            description=activity["description"]
+        )
+    except Exception as e:
+        # Log error but don't fail the signup
+        print(f"Warning: Failed to queue confirmation email: {e}")
     
     return {"message": f"Signed up {email} for {activity_name}"}
 
@@ -156,13 +160,17 @@ async def unregister_from_activity(activity_name: str, email: str, background_ta
     # Remove student
     activity["participants"].remove(email)
     
-    # Send confirmation email asynchronously
-    background_tasks.add_task(
-        send_unregister_confirmation_task.delay,
-        student_email=email,
-        activity_name=activity_name,
-        schedule=activity["schedule"]
-    )
+    # Send confirmation email asynchronously (gracefully handle failures)
+    try:
+        background_tasks.add_task(
+            send_unregister_confirmation_task.delay,
+            student_email=email,
+            activity_name=activity_name,
+            schedule=activity["schedule"]
+        )
+    except Exception as e:
+        # Log error but don't fail the unregistration
+        print(f"Warning: Failed to queue confirmation email: {e}")
     
     return {"message": f"Unregistered {email} from {activity_name}"}
 
@@ -235,15 +243,25 @@ async def announce_new_activity(
     if not recipients:
         return {"message": "No recipients to send to"}
     
-    # Send announcement emails asynchronously
-    background_tasks.add_task(
-        send_new_activity_announcement_task.delay,
-        recipients=recipients,
-        activity_name=activity_name,
-        schedule=activity["schedule"],
-        description=activity["description"],
-        max_participants=activity["max_participants"]
-    )
+    # Send announcement emails asynchronously (gracefully handle failures)
+    try:
+        background_tasks.add_task(
+            send_new_activity_announcement_task.delay,
+            recipients=recipients,
+            activity_name=activity_name,
+            schedule=activity["schedule"],
+            description=activity["description"],
+            max_participants=activity["max_participants"]
+        )
+    except Exception as e:
+        # Log error but return success with warning
+        print(f"Warning: Failed to queue announcement emails: {e}")
+        return {
+            "message": f"Could not queue announcement emails (task queue unavailable)",
+            "activity": activity_name,
+            "recipients_count": len(recipients),
+            "warning": "Email service may not be available"
+        }
     
     return {
         "message": f"Announcement emails queued for {len(recipients)} recipients",
@@ -272,14 +290,23 @@ async def send_batch_announcement(
     if not recipients:
         raise HTTPException(status_code=400, detail="No recipients specified")
     
-    # Send batch emails asynchronously
-    background_tasks.add_task(
-        send_batch_emails_task.delay,
-        recipients=recipients,
-        subject=subject,
-        template_name=template_name,
-        context=context
-    )
+    # Send batch emails asynchronously (gracefully handle failures)
+    try:
+        background_tasks.add_task(
+            send_batch_emails_task.delay,
+            recipients=recipients,
+            subject=subject,
+            template_name=template_name,
+            context=context
+        )
+    except Exception as e:
+        # Log error but return informative message
+        print(f"Warning: Failed to queue batch emails: {e}")
+        return {
+            "message": f"Could not queue batch emails (task queue unavailable)",
+            "recipients_count": len(recipients),
+            "warning": "Email service may not be available"
+        }
     
     return {
         "message": f"Batch emails queued for {len(recipients)} recipients",

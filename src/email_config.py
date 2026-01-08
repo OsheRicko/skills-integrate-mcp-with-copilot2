@@ -9,6 +9,7 @@ import os
 from typing import Optional
 from fastapi_mail import ConnectionConfig
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +31,9 @@ def get_email_config() -> ConnectionConfig:
     Returns:
         ConnectionConfig: FastAPI Mail connection configuration
     """
+    # Determine template folder path
+    template_folder = Path(__file__).parent / "email_templates"
+    
     return ConnectionConfig(
         MAIL_USERNAME=os.getenv("MAIL_USERNAME", "noreply@mergington.edu"),
         MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
@@ -40,7 +44,7 @@ def get_email_config() -> ConnectionConfig:
         MAIL_SSL_TLS=os.getenv("MAIL_SSL", "False").lower() == "true",
         USE_CREDENTIALS=True,
         VALIDATE_CERTS=True,
-        TEMPLATE_FOLDER="./src/email_templates"
+        TEMPLATE_FOLDER=str(template_folder)
     )
 
 
