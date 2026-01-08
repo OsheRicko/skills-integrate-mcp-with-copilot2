@@ -8,9 +8,13 @@ including scheduled reminders and batch email sending.
 import asyncio
 from datetime import datetime, timedelta
 from typing import List, Dict
+import logging
 from celery_config import celery_app
 from email_service import email_service
 from email_preferences import should_send_email, NotificationCategory, get_parent_email
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 # Helper to run async functions in Celery tasks
@@ -175,7 +179,7 @@ def send_weekly_digest_task():
     # 2. For each user, get their registered activities
     # 3. Send digest email
     
-    print("Weekly digest task executed at:", datetime.now())
+    logger.info(f"Weekly digest task executed at: {datetime.now()}")
     return {"status": "executed"}
 
 
@@ -192,7 +196,7 @@ def send_daily_reminders_task():
     # 2. For each activity, get registered students
     # 3. Send reminder emails
     
-    print("Daily reminders task executed at:", datetime.now())
+    logger.info(f"Daily reminders task executed at: {datetime.now()}")
     return {"status": "executed"}
 
 

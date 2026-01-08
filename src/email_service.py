@@ -11,8 +11,12 @@ from jinja2 import Environment, FileSystemLoader
 import os
 from pathlib import Path
 from datetime import datetime
+import logging
 
 from email_config import get_email_config, is_email_enabled
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 # Initialize Jinja2 environment for email templates
@@ -50,7 +54,7 @@ class EmailService:
             bool: True if email was sent successfully, False otherwise
         """
         if not self.enabled:
-            print(f"Email service disabled. Would send to {recipients}: {subject}")
+            logger.info(f"Email service disabled. Would send to {recipients}: {subject}")
             return False
         
         try:
@@ -70,11 +74,11 @@ class EmailService:
             
             # Send email
             await self.mail.send_message(message)
-            print(f"Email sent successfully to {recipients}: {subject}")
+            logger.info(f"Email sent successfully to {recipients}: {subject}")
             return True
             
         except Exception as e:
-            print(f"Failed to send email to {recipients}: {str(e)}")
+            logger.error(f"Failed to send email to {recipients}: {str(e)}")
             return False
     
     async def send_signup_confirmation(

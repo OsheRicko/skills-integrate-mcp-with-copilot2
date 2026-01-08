@@ -7,7 +7,13 @@ without requiring an actual email server or Redis instance.
 """
 
 import sys
-sys.path.insert(0, '/home/runner/work/skills-integrate-mcp-with-copilot2/skills-integrate-mcp-with-copilot2/src')
+import os
+from pathlib import Path
+
+# Add src directory to path using relative path
+script_dir = Path(__file__).parent
+src_dir = script_dir / 'src'
+sys.path.insert(0, str(src_dir))
 
 from email_preferences import (
     EmailPreferences,
@@ -100,7 +106,9 @@ def test_email_templates():
     from jinja2 import Environment, FileSystemLoader
     from pathlib import Path
     
-    template_dir = Path('/home/runner/work/skills-integrate-mcp-with-copilot2/skills-integrate-mcp-with-copilot2/src/email_templates')
+    # Use relative path to find templates
+    script_dir = Path(__file__).parent
+    template_dir = script_dir / 'src' / 'email_templates'
     jinja_env = Environment(loader=FileSystemLoader(str(template_dir)))
     
     templates = [

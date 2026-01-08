@@ -11,6 +11,7 @@ from fastapi.responses import RedirectResponse
 from typing import List, Optional
 import os
 from pathlib import Path
+import logging
 
 # Import email-related modules
 from email_preferences import (
@@ -26,6 +27,10 @@ from celery_tasks import (
     send_new_activity_announcement_task,
     send_batch_emails_task
 )
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -135,7 +140,7 @@ async def signup_for_activity(activity_name: str, email: str, background_tasks: 
         )
     except Exception as e:
         # Log error but don't fail the signup
-        print(f"Warning: Failed to queue confirmation email: {e}")
+        logger.warning(f"Failed to queue confirmation email: {e}")
     
     return {"message": f"Signed up {email} for {activity_name}"}
 
@@ -170,7 +175,7 @@ async def unregister_from_activity(activity_name: str, email: str, background_ta
         )
     except Exception as e:
         # Log error but don't fail the unregistration
-        print(f"Warning: Failed to queue confirmation email: {e}")
+        logger.warning(f"Failed to queue confirmation email: {e}")
     
     return {"message": f"Unregistered {email} from {activity_name}"}
 
@@ -255,7 +260,7 @@ async def announce_new_activity(
         )
     except Exception as e:
         # Log error but return success with warning
-        print(f"Warning: Failed to queue announcement emails: {e}")
+        logger.warning(f"Failed to queue announcement emails: {e}")
         return {
             "message": f"Could not queue announcement emails (task queue unavailable)",
             "activity": activity_name,
@@ -301,7 +306,7 @@ async def send_batch_announcement(
         )
     except Exception as e:
         # Log error but return informative message
-        print(f"Warning: Failed to queue batch emails: {e}")
+        logger.warning(f"Failed to queue batch emails: {e}")
         return {
             "message": f"Could not queue batch emails (task queue unavailable)",
             "recipients_count": len(recipients),
