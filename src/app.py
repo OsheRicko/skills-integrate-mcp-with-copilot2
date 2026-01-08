@@ -5,7 +5,7 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from typing import List, Optional
@@ -110,7 +110,7 @@ def get_activities():
 
 
 @app.post("/activities/{activity_name}/signup")
-async def signup_for_activity(activity_name: str, email: str, background_tasks: BackgroundTasks):
+async def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
     # Validate activity exists
     if activity_name not in activities:
@@ -131,8 +131,7 @@ async def signup_for_activity(activity_name: str, email: str, background_tasks: 
     
     # Send confirmation email asynchronously (gracefully handle failures)
     try:
-        background_tasks.add_task(
-            send_signup_confirmation_task.delay,
+        send_signup_confirmation_task.delay(
             student_email=email,
             activity_name=activity_name,
             schedule=activity["schedule"],
@@ -146,7 +145,7 @@ async def signup_for_activity(activity_name: str, email: str, background_tasks: 
 
 
 @app.delete("/activities/{activity_name}/unregister")
-async def unregister_from_activity(activity_name: str, email: str, background_tasks: BackgroundTasks):
+async def unregister_from_activity(activity_name: str, email: str):
     """Unregister a student from an activity"""
     # Validate activity exists
     if activity_name not in activities:
@@ -167,8 +166,7 @@ async def unregister_from_activity(activity_name: str, email: str, background_ta
     
     # Send confirmation email asynchronously (gracefully handle failures)
     try:
-        background_tasks.add_task(
-            send_unregister_confirmation_task.delay,
+        send_unregister_confirmation_task.delay(
             student_email=email,
             activity_name=activity_name,
             schedule=activity["schedule"]
@@ -224,8 +222,7 @@ def list_all_preferences():
 @app.post("/announcements/new-activity/{activity_name}")
 async def announce_new_activity(
     activity_name: str,
-    recipients: Optional[List[str]] = None,
-    background_tasks: BackgroundTasks = None
+    recipients: Optional[List[str]] = None
 ):
     """
     Send announcement email for a new activity.
@@ -250,8 +247,7 @@ async def announce_new_activity(
     
     # Send announcement emails asynchronously (gracefully handle failures)
     try:
-        background_tasks.add_task(
-            send_new_activity_announcement_task.delay,
+        send_new_activity_announcement_task.delay(
             recipients=recipients,
             activity_name=activity_name,
             schedule=activity["schedule"],
@@ -280,8 +276,7 @@ async def send_batch_announcement(
     recipients: List[str],
     subject: str,
     template_name: str,
-    context: dict,
-    background_tasks: BackgroundTasks
+    context: dict
 ):
     """
     Send batch announcement emails using a custom template.
@@ -297,8 +292,7 @@ async def send_batch_announcement(
     
     # Send batch emails asynchronously (gracefully handle failures)
     try:
-        background_tasks.add_task(
-            send_batch_emails_task.delay,
+        send_batch_emails_task.delay(
             recipients=recipients,
             subject=subject,
             template_name=template_name,

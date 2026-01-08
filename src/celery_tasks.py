@@ -19,13 +19,17 @@ logger = logging.getLogger(__name__)
 
 # Helper to run async functions in Celery tasks
 def run_async(coro):
-    """Run async coroutine in sync context"""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    """Run async coroutine in sync context using asyncio.run()"""
     try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
+        return asyncio.run(coro)
+    except RuntimeError:
+        # Fallback for older Python versions or if event loop exists
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
 
 
 @celery_app.task(name="celery_tasks.send_signup_confirmation_task")
